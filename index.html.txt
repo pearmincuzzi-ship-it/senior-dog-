@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>老年犬健康日历</title>
+
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#F7C948">
+
+<style>
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  margin: 0;
+  background: #f9f9f9;
+}
+
+header {
+  background: #F7C948;
+  color: #fff;
+  padding: 16px;
+  text-align: center;
+}
+
+.month {
+  padding: 12px;
+}
+
+.days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+}
+
+.day {
+  background: #fff;
+  padding: 10px;
+  text-align: center;
+  border-radius: 8px;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+}
+
+.modal-content {
+  background: #fff;
+  margin: 10% auto;
+  padding: 16px;
+  width: 90%;
+  border-radius: 12px;
+}
+
+textarea {
+  width: 100%;
+  height: 80px;
+  margin-top: 8px;
+}
+
+button {
+  margin-top: 10px;
+  padding: 8px 14px;
+  border: none;
+  background: #F7C948;
+  color: #fff;
+  border-radius: 6px;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h2>老年犬健康日历</h2>
+  <p>每天 1 分钟，陪老年狗更舒服地生活</p>
+</header>
+
+<div class="month">
+  <h3>1 月 · 关节与行动力</h3>
+  <div class="days" id="days"></div>
+</div>
+
+<div class="modal" id="modal">
+  <div class="modal-content">
+    <h3 id="dateTitle"></h3>
+    <p id="knowledge"></p>
+    <strong>我的记录：</strong>
+    <textarea id="note"></textarea>
+    <button onclick="saveNote()">保存</button>
+    <button onclick="closeModal()">关闭</button>
+  </div>
+</div>
+
+<script>
+// ====== 示例知识数据（你以后可以换成 365 天） ======
+const knowledgeData = {
+  1: "老年犬关节容易僵硬，早晨起床时动作可能变慢。",
+  2: "寒冷天气会加重关节不适，注意保暖。",
+  3: "轻度、规律的运动有助于维持关节灵活。",
+  4: "避免频繁上下楼或跳沙发。",
+  5: "观察是否出现跛行或不愿走路。",
+  6: "关节问题有时会表现为情绪变化。",
+  7: "今天轻轻按摩狗狗的后腿肌肉。"
+};
+
+const daysContainer = document.getElementById("days");
+const modal = document.getElementById("modal");
+const dateTitle = document.getElementById("dateTitle");
+const knowledge = document.getElementById("knowledge");
+const note = document.getElementById("note");
+
+for (let i = 1; i <= 7; i++) {
+  const div = document.createElement("div");
+  div.className = "day";
+  div.innerText = i;
+  div.onclick = () => openDay(i);
+  daysContainer.appendChild(div);
+}
+
+function openDay(day) {
+  const key = `2025-01-${day}`;
+  dateTitle.innerText = `1 月 ${day} 日`;
+  knowledge.innerText = knowledgeData[day] || "今日暂无内容";
+  note.value = localStorage.getItem(key) || "";
+  modal.style.display = "block";
+}
+
+function saveNote() {
+  const key = dateTitle.innerText;
+  localStorage.setItem(key, note.value);
+  alert("已保存到你的手机");
+}
+
+function closeModal() {
+  modal.style.display = "none";
+}
+
+// 注册 PWA
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("sw.js");
+}
+</script>
+
+</body>
+</html>
