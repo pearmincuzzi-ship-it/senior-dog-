@@ -1,149 +1,181 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>老年犬健康日历</title>
+  <meta charset="UTF-8" />
+  <title>与爪携老 · Hand in Paw</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#F7C948">
-
-<style>
-body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  margin: 0;
-  background: #f9f9f9;
-}
-
-header {
-  background: #F7C948;
-  color: #fff;
-  padding: 16px;
-  text-align: center;
-}
-
-.month {
-  padding: 12px;
-}
-
-.days {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 6px;
-}
-
-.day {
-  background: #fff;
-  padding: 10px;
-  text-align: center;
-  border-radius: 8px;
-  cursor: pointer;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-}
-
-.modal {
-  display: none;
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.5);
-}
-
-.modal-content {
-  background: #fff;
-  margin: 10% auto;
-  padding: 16px;
-  width: 90%;
-  border-radius: 12px;
-}
-
-textarea {
-  width: 100%;
-  height: 80px;
-  margin-top: 8px;
-}
-
-button {
-  margin-top: 10px;
-  padding: 8px 14px;
-  border: none;
-  background: #F7C948;
-  color: #fff;
-  border-radius: 6px;
-}
-</style>
+  <style>
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f6f7f8;
+      color: #333;
+    }
+    header {
+      background: #f2c94c;
+      padding: 20px;
+      text-align: center;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 22px;
+    }
+    header p {
+      margin: 4px 0 0;
+      font-size: 14px;
+    }
+    section {
+      background: #fff;
+      margin: 16px;
+      padding: 16px;
+      border-radius: 12px;
+    }
+    h2 {
+      font-size: 18px;
+      margin-top: 0;
+    }
+    input, textarea, button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 8px;
+      font-size: 16px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      box-sizing: border-box;
+    }
+    button {
+      background: #f2c94c;
+      border: none;
+      font-weight: bold;
+    }
+    .source {
+      font-size: 12px;
+      color: #666;
+      margin-top: 8px;
+      line-height: 1.4;
+    }
+    .hint {
+      color: #999;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    .date-nav {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 10px;
+    }
+    .date-nav button {
+      width: 48%;
+    }
+  </style>
 </head>
 
 <body>
 
 <header>
-  <h2>老年犬健康日历</h2>
-  <p>每天 1 分钟，陪老年狗更舒服地生活</p>
+  <h1>与爪携老 · Hand in Paw</h1>
+  <p>Senior Dog Companion Calendar</p>
 </header>
 
-<div class="month">
-  <h3>1 月 · 关节与行动力</h3>
-  <div class="days" id="days"></div>
-</div>
-
-<div class="modal" id="modal">
-  <div class="modal-content">
-    <h3 id="dateTitle"></h3>
-    <p id="knowledge"></p>
-    <strong>我的记录：</strong>
-    <textarea id="note"></textarea>
-    <button onclick="saveNote()">保存</button>
-    <button onclick="closeModal()">关闭</button>
+<!-- 年龄换算器 -->
+<section>
+  <h2>🐾 年龄换算器</h2>
+  <input type="number" id="dogAge" placeholder="输入狗狗年龄（年）" step="0.1">
+  <button onclick="calcAge()">计算对应人类年龄</button>
+  <div id="ageResult"></div>
+  <div class="source">
+    公式：16 × ln(狗的年龄) + 31  
+    <br>Cell Systems, 2020（研究对象：拉布拉多犬）
   </div>
-</div>
+</section>
+
+<!-- 今日内容 -->
+<section>
+  <h2 id="dateTitle">📘 今日陪伴</h2>
+  <div id="content"></div>
+  <div id="hint" class="hint"></div>
+  <div class="source" id="source"></div>
+
+  <div class="date-nav">
+    <button onclick="changeDay(-1)">查看前一天</button>
+    <button onclick="changeDay(1)">查看后一天</button>
+  </div>
+</section>
+
+<!-- 我的提醒 -->
+<section>
+  <h2>🗓 我的记录</h2>
+  <textarea id="note" rows="4" placeholder="例如：下周二兽医复查"></textarea>
+  <button onclick="saveNote()">保存</button>
+</section>
 
 <script>
-// ====== 示例知识数据（你以后可以换成 365 天） ======
-const knowledgeData = {
-  1: "老年犬关节容易僵硬，早晨起床时动作可能变慢。",
-  2: "寒冷天气会加重关节不适，注意保暖。",
-  3: "轻度、规律的运动有助于维持关节灵活。",
-  4: "避免频繁上下楼或跳沙发。",
-  5: "观察是否出现跛行或不愿走路。",
-  6: "关节问题有时会表现为情绪变化。",
-  7: "今天轻轻按摩狗狗的后腿肌肉。"
-};
+let currentDate = new Date();
 
-const daysContainer = document.getElementById("days");
-const modal = document.getElementById("modal");
-const dateTitle = document.getElementById("dateTitle");
-const knowledge = document.getElementById("knowledge");
-const note = document.getElementById("note");
-
-for (let i = 1; i <= 7; i++) {
-  const div = document.createElement("div");
-  div.className = "day";
-  div.innerText = i;
-  div.onclick = () => openDay(i);
-  daysContainer.appendChild(div);
+function formatKey(date) {
+  return String(date.getMonth() + 1).padStart(2, "0") + "-" +
+         String(date.getDate()).padStart(2, "0");
 }
 
-function openDay(day) {
-  const key = `2025-01-${day}`;
-  dateTitle.innerText = `1 月 ${day} 日`;
-  knowledge.innerText = knowledgeData[day] || "今日暂无内容";
-  note.value = localStorage.getItem(key) || "";
-  modal.style.display = "block";
+function showDay(date) {
+  const today = new Date();
+  const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const targetStart = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+
+  document.getElementById("dateTitle").innerText =
+    `📘 ${date.getMonth()+1} 月 ${date.getDate()} 日`;
+
+  fetch("data.json")
+    .then(res => res.json())
+    .then(data => {
+      const key = formatKey(date);
+
+      if (targetStart <= todayStart && data[key]) {
+        document.getElementById("content").innerHTML =
+          `<strong>${data[key].title}</strong><p>${data[key].content}</p>`;
+        document.getElementById("source").innerText = data[key].source;
+        document.getElementById("hint").innerText = "";
+      } else if (targetStart > todayStart) {
+        document.getElementById("content").innerHTML = "";
+        document.getElementById("source").innerText = "";
+        document.getElementById("hint").innerText =
+          "🐾 这一天还没到，与爪携老会在那一天陪你一起打开。";
+      } else {
+        document.getElementById("content").innerHTML =
+          "这一天暂时没有内容。";
+        document.getElementById("source").innerText = "";
+        document.getElementById("hint").innerText = "";
+      }
+    });
+}
+
+function changeDay(delta) {
+  currentDate.setDate(currentDate.getDate() + delta);
+  showDay(currentDate);
+}
+
+function calcAge() {
+  const age = parseFloat(document.getElementById("dogAge").value);
+  if (!age || age <= 0) {
+    document.getElementById("ageResult").innerText = "请输入有效年龄";
+    return;
+  }
+  const human = Math.round(16 * Math.log(age) + 31);
+  document.getElementById("ageResult").innerText =
+    `大致相当于人类 ${human} 岁`;
 }
 
 function saveNote() {
-  const key = dateTitle.innerText;
-  localStorage.setItem(key, note.value);
-  alert("已保存到你的手机");
+  localStorage.setItem("handInPawNote", document.getElementById("note").value);
+  alert("已保存在本设备");
 }
 
-function closeModal() {
-  modal.style.display = "none";
-}
-
-// 注册 PWA
-if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("sw.js");
-}
+window.onload = () => {
+  showDay(currentDate);
+  const saved = localStorage.getItem("handInPawNote");
+  if (saved) document.getElementById("note").value = saved;
+};
 </script>
 
 </body>
